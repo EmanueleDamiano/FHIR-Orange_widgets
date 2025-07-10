@@ -1,0 +1,10 @@
+Orange3==3.37.0
+Orange3-Timeseries==0.6.2
+pandas==2.2.2
+numpy
+openai==1.23.6
+matplotlib
+PyQt5==5.15.10
+pySankey
+scikit-learn 
+plotly
