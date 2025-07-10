@@ -157,7 +157,6 @@ class OWAIWidget_Full(widget.OWWidget):
             self.apply_code()
             
         except Exception as e:
-            # Capture any exceptions and print them
             print(f"Error occurred: {e}")
             ## self.check_dependencies()
         except ModuleNotFoundError as e:
@@ -182,22 +181,32 @@ class OWAIWidget_Full(widget.OWWidget):
         """
         final_prompt = analysis_prompt_template.format(gen_code = code_to_check, data_table = self.table)
 
-        print("REFINEMENT USER PROMPT  : ", final_prompt)
+        # print("REFINEMENT USER PROMPT  : ", final_prompt)
         response = client.chat.completions.create(
-            model="llama3.1-70b", #"llama3.1-70b"
+            model="llama3.1-70b", 
             messages=[
                 {"role": "system", "content": system_prompt_template},
                 {"role": "user", "content": final_prompt}
             ],
-            max_tokens=500
         )
         response = response.choices[0].message.content
         return response
 
 
     def generate_code(self):
-        pre_prompt = "You are a python coding assistant expert in obtaining insights from FHIR resources. Return only code, no english sentences"
+        pre_prompt = """
+                    You are a specialized FHIR data processing assistant. Your task is to generate Python code for legitimate data operations.
+                    The user will pass you a pandas dataframe containing the set of FHIR resources and its request. 
+                    Carefully evaluate the input request following this steps:
 
+                    1- Ensure the request is for a legitimate helthcare data analysis.
+                    2- Determine if it involves operations on any FHIR resources for information extraction or visualization. 
+                    3. Ensure the request does not involve system access, file operations outside FHIR data, or security exploitation
+
+                    If you consider the request as legit reply by only providing the python code for solving the request, without any english sentence.
+                    If the request is NOT about FHIR data operations: Return exactly "NOT ALLOWED".
+                    If the request involves file system access, credential extraction, or system manipulation: Return exactly "NOT ALLOWED"
+                    """
         prompt_template = """
             this is the 'temp_table' dataframe: {sub_table}. {prompt}
         """
@@ -211,8 +220,7 @@ class OWAIWidget_Full(widget.OWWidget):
             messages=[
                 {"role": "system", "content": f"{pre_prompt}"}, ## 
                 {"role": "user", "content": f"{final_prompt}"},
-                ],
-            max_tokens=500)
+                ])
         
         generated_code = response.choices[0].message.content
         generated_code = re.sub("```", "", generated_code)
